@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document containing studio preferences and account tier",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Authenticated user UID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "avatarUrl": { "type": "string", "description": "Avatar photo URL" },
+        "credits": { "type": "integer", "description": "Remaining song generation credits" },
+        "subscriptionTier": { "type": "string", "description": "Account plan (free, creator, studio_pro)" },
+        "preferredLanguage": { "type": "string", "description": "Default language choice (e.g. English, Twi)" },
+        "preferredGenre": { "type": "string", "description": "Default preferred genre" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server update timestamp" }
+      },
+      "required": ["userId", "displayName", "email", "credits", "subscriptionTier", "createdAt"]
+    },
+    "Song": {
+      "title": "Song",
+      "description": "Generated or draft song created by user in Osei AI Music Studio",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner UID" },
+        "title": { "type": "string", "description": "Song title" },
+        "description": { "type": "string", "description": "Prompt theme and description" },
+        "genre": { "type": "string", "description": "Music genre (e.g. Ghanaian Highlife, Afrobeats)" },
+        "mood": { "type": "string", "description": "Vibe and mood" },
+        "vocalPreference": { "type": "string", "description": "Vocal styling or instrumental" },
+        "language": { "type": "string", "description": "Song language (English, Twi, etc.)" },
+        "lyrics": { "type": "string", "description": "Custom song lyrics or structure tags" },
+        "isInstrumental": { "type": "boolean", "description": "Whether song has no vocals" },
+        "status": { "type": "string", "description": "Song pipeline status (draft, queued, generating, completed, failed)" },
+        "audioUrl": { "type": "string", "description": "Audio stream URL" },
+        "durationSeconds": { "type": "integer", "description": "Audio duration in seconds" },
+        "isFavorite": { "type": "boolean", "description": "Favorited state by user" },
+        "phaseVersion": { "type": "string", "description": "Studio architecture phase indicator" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server update timestamp" }
+      },
+      "required": ["userId", "title", "genre", "mood", "vocalPreference", "language", "isInstrumental", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile and studio credits document"
+    },
+    "/users/{userId}/songs/{songId}": {
+      "schema": "Song",
+      "description": "User songs subcollection isolated by authenticated owner"
+    }
+  }
+}

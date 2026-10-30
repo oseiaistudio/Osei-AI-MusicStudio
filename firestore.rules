@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all unknown paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 200 &&
+             (!('avatarUrl' in data) || data.avatarUrl == null || (data.avatarUrl is string && data.avatarUrl.size() <= 1000)) &&
+             data.credits is int && data.credits >= 0 &&
+             data.subscriptionTier is string && data.subscriptionTier.size() <= 30 &&
+             (!('preferredLanguage' in data) || (data.preferredLanguage is string && data.preferredLanguage.size() <= 50)) &&
+             (!('preferredGenre' in data) || (data.preferredGenre is string && data.preferredGenre.size() <= 50)) &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidSong(data) {
+      return data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+             data.genre is string && data.genre.size() > 0 && data.genre.size() <= 60 &&
+             data.mood is string && data.mood.size() > 0 && data.mood.size() <= 60 &&
+             data.vocalPreference is string && data.vocalPreference.size() <= 60 &&
+             data.language is string && data.language.size() <= 60 &&
+             (!('lyrics' in data) || (data.lyrics is string && data.lyrics.size() <= 5000)) &&
+             data.isInstrumental is bool &&
+             data.status is string && data.status in ['draft', 'queued', 'generating', 'completed', 'failed'] &&
+             (!('audioUrl' in data) || data.audioUrl == null || (data.audioUrl is string && data.audioUrl.size() <= 1500)) &&
+             (!('durationSeconds' in data) || data.durationSeconds is int) &&
+             (!('isFavorite' in data) || data.isFavorite is bool) &&
+             (!('phaseVersion' in data) || (data.phaseVersion is string && data.phaseVersion.size() <= 50)) &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // User profiles collection
+    match /users/{userId} {
+      allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+      // On creation: Initial credits must not exceed default 50, tier must be 'free'
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'credits', 'subscriptionTier', 'createdAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'avatarUrl', 'credits', 'subscriptionTier', 'preferredLanguage', 'preferredGenre', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().credits <= 50 &&
+                       incoming().credits >= 0 &&
+                       incoming().subscriptionTier in ['free'] &&
+                       isValidUserProfile(incoming());
+
+      // On update: Client CANNOT modify credits or subscriptionTier directly.
+      // Privilege escalation and credit manipulation from client is denied.
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().credits == existing().credits &&
+                       incoming().subscriptionTier == existing().subscriptionTier &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatarUrl', 'preferredLanguage', 'preferredGenre', 'updatedAt']) &&
+                       isValidUserProfile(incoming());
+
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+
+      // Subcollection: Songs owned by this user
+      match /songs/{songId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+        // On creation: Client can only create songs in 'draft' or 'queued' status.
+        // Fabricating 'completed' audio or arbitrary audioUrl from client is denied.
+        allow create: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         isValidId(songId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().status in ['draft', 'queued'] &&
+                         (!('audioUrl' in incoming()) || incoming().audioUrl == null || incoming().audioUrl == '') &&
+                         incoming().keys().hasAll(['userId', 'title', 'genre', 'mood', 'vocalPreference', 'language', 'isInstrumental', 'status', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'description', 'genre', 'mood', 'vocalPreference', 'language', 'lyrics', 'isInstrumental', 'status', 'audioUrl', 'durationSeconds', 'isFavorite', 'phaseVersion', 'createdAt', 'updatedAt']) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidSong(incoming());
+
+        // On update: Client can only edit metadata parameters (lyrics, title, description, mood, genre, favorite, etc.)
+        // Client CANNOT elevate status to 'completed' or forge audioUrl directly.
+        allow update: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         isValidId(songId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'genre', 'mood', 'vocalPreference', 'language', 'lyrics', 'isInstrumental', 'isFavorite', 'phaseVersion', 'updatedAt']) &&
+                         isValidSong(incoming());
+
+        allow delete: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         isValidId(songId);
+      }
+    }
+  }
+}

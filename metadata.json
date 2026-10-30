@@ -1,0 +1,6 @@
+{
+  "name": "Osei AI Music Studio",
+  "description": "Professional AI music generation studio specializing in Ghanaian and international music creation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
