@@ -48,6 +48,11 @@ import com.osei.aimusicstudio.ui.screens.video.VideoStudioScreen
 import com.osei.aimusicstudio.ui.screens.video.VideoStudioViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.osei.aimusicstudio.R
+import com.osei.aimusicstudio.ui.screens.legal.AboutScreen
+import com.osei.aimusicstudio.ui.screens.legal.ContactSupportScreen
+import com.osei.aimusicstudio.ui.screens.legal.CopyrightScreen
+import com.osei.aimusicstudio.ui.screens.legal.PrivacyPolicyScreen
+import com.osei.aimusicstudio.ui.screens.legal.TermsConditionsScreen
 
 @Composable
 fun AppNavigation(
@@ -337,6 +342,11 @@ fun AppNavigation(
                 studioPreferences = studioPreferences,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToPricing = { navController.navigate(Screen.CreditsPricing.route) },
+                onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                onNavigateToTerms = { navController.navigate(Screen.TermsConditions.route) },
+                onNavigateToCopyright = { navController.navigate(Screen.Copyright.route) },
+                onNavigateToContact = { navController.navigate(Screen.ContactSupport.route) },
                 onSignOutComplete = {
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(0) { inclusive = true }
@@ -348,6 +358,45 @@ fun AppNavigation(
         // 14. Credits & Pricing Screen
         composable(Screen.CreditsPricing.route) {
             CreditsPricingScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 15. About Screen
+        composable(Screen.About.route) {
+            AboutScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                onNavigateToTerms = { navController.navigate(Screen.TermsConditions.route) },
+                onNavigateToCopyright = { navController.navigate(Screen.Copyright.route) },
+                onNavigateToContact = { navController.navigate(Screen.ContactSupport.route) }
+            )
+        }
+
+        // 16. Privacy Policy Screen
+        composable(Screen.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 17. Terms & Conditions Screen
+        composable(Screen.TermsConditions.route) {
+            TermsConditionsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 18. Copyright Screen
+        composable(Screen.Copyright.route) {
+            CopyrightScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 19. Contact & Support Screen
+        composable(Screen.ContactSupport.route) {
+            ContactSupportScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

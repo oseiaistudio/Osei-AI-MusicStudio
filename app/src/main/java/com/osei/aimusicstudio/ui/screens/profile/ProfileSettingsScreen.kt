@@ -73,6 +73,16 @@ import com.osei.aimusicstudio.ui.theme.TextPrimary
 import com.osei.aimusicstudio.ui.theme.TextSecondary
 import com.osei.aimusicstudio.ui.theme.TextTertiary
 
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Copyright
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Policy
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SupportAgent
+import com.osei.aimusicstudio.domain.legal.AppLegalInfo
+import com.osei.aimusicstudio.util.ShareHelper
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSettingsScreen(
@@ -82,6 +92,11 @@ fun ProfileSettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPricing: () -> Unit,
     onSignOutComplete: () -> Unit,
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
+    onNavigateToTerms: () -> Unit = {},
+    onNavigateToCopyright: () -> Unit = {},
+    onNavigateToContact: () -> Unit = {},
     studioPreferences: StudioPreferences? = null,
     modifier: Modifier = Modifier
 ) {
@@ -379,6 +394,79 @@ fun ProfileSettingsScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Settings, Legal & About Section
+            Text(
+                text = "Settings & Legal",
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(StudioCardSurface)
+                    .border(1.dp, StudioBorder, RoundedCornerShape(16.dp))
+            ) {
+                SettingsMenuActionRow(
+                    icon = Icons.Default.Info,
+                    title = "About Osei AI Music Studio",
+                    subtitle = "App details, developer info and architecture",
+                    onClick = onNavigateToAbout,
+                    testTag = "settings_menu_about"
+                )
+                SettingsDivider()
+                SettingsMenuActionRow(
+                    icon = Icons.Default.Shield,
+                    title = "Privacy Policy",
+                    subtitle = "Data collection, local file access & storage",
+                    onClick = onNavigateToPrivacy,
+                    testTag = "settings_menu_privacy"
+                )
+                SettingsDivider()
+                SettingsMenuActionRow(
+                    icon = Icons.Default.Policy,
+                    title = "Terms & Conditions",
+                    subtitle = "Acceptable use, media rights & disclaimer",
+                    onClick = onNavigateToTerms,
+                    testTag = "settings_menu_terms"
+                )
+                SettingsDivider()
+                SettingsMenuActionRow(
+                    icon = Icons.Default.Copyright,
+                    title = "Copyright",
+                    subtitle = AppLegalInfo.COPYRIGHT_NOTICE,
+                    onClick = onNavigateToCopyright,
+                    testTag = "settings_menu_copyright"
+                )
+                SettingsDivider()
+                SettingsMenuActionRow(
+                    icon = Icons.Default.Share,
+                    title = "Share App",
+                    subtitle = "Share Osei AI Music Studio with fellow artists",
+                    onClick = { ShareHelper.shareApp(context) },
+                    testTag = "settings_menu_share"
+                )
+                SettingsDivider()
+                SettingsMenuActionRow(
+                    icon = Icons.Default.SupportAgent,
+                    title = "Contact & Support",
+                    subtitle = "${AppLegalInfo.SUPPORT_PHONE_FORMATTED} • ${AppLegalInfo.SUPPORT_EMAIL}",
+                    onClick = onNavigateToContact,
+                    testTag = "settings_menu_contact"
+                )
+                SettingsDivider()
+                SettingsVersionRow(
+                    versionString = AppLegalInfo.formatVersion(),
+                    packageName = AppLegalInfo.PACKAGE_NAME,
+                    phoneContact = AppLegalInfo.SUPPORT_PHONE_RAW
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             // Sign Out Button
@@ -449,3 +537,120 @@ private fun ArchitectureStatusRow(
         )
     }
 }
+
+@Composable
+private fun SettingsMenuActionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    testTag: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .testTag(testTag),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(StudioPrimary.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = StudioSecondary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = TextPrimary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                color = TextTertiary,
+                fontSize = 11.sp,
+                lineHeight = 15.sp
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = TextTertiary,
+            modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(StudioBorder.copy(alpha = 0.5f))
+    )
+}
+
+@Composable
+private fun SettingsVersionRow(
+    versionString: String,
+    packageName: String,
+    phoneContact: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .testTag("settings_version_info")
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "App Version",
+                color = TextPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = versionString,
+                color = StudioSecondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = packageName,
+                color = TextTertiary,
+                fontSize = 11.sp
+            )
+            Text(
+                text = "ID: $phoneContact",
+                color = StudioTertiary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
